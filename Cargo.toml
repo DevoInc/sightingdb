@@ -5,3 +5,8 @@ authors = ["Sebastien Tricaud <sebastien.tricaud@devo.com>"]
 edition = "2018"
 
 [dependencies]
+dirs = "1.0"
+rustyline = "4.1.0"
+regex = "1"
+clap = "~2.27.0"
+#protobuf = "2.6.2"
