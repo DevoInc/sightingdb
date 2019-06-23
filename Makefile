@@ -1,7 +1,7 @@
 all: sightingdb
 
-sightingdb: src/main.rs
+sightingdb: src/daemon/main.rs src/client/main.rs
 	cargo build
 
-release: src/main.rs
+release: src/daemon/main.rs src/client/main.rs
 	cargo build --release

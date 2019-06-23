@@ -4,6 +4,14 @@ version = "0.0.1"
 authors = ["Sebastien Tricaud <sebastien.tricaud@devo.com>"]
 edition = "2018"
 
+[[bin]]
+name = "sightingdb-daemon"
+path = "src/daemon/main.rs"
+
+[[bin]]
+name = "sightingdb"
+path = "src/client/main.rs"
+
 [dependencies]
 dirs = "1.0"
 rustyline = "4.1.0"
