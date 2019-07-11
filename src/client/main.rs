@@ -1,7 +1,7 @@
 extern crate rustyline;
 extern crate dirs;
 extern crate regex;
-extern crate clap;
+//extern crate clap;
 
 mod db_write;
 mod db_read;
@@ -11,18 +11,18 @@ mod db;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use regex::Regex;
-use clap::App;
+//use clap::App;
 
 //use attribute::Attribute;
 
 
 
 fn main() {
-    App::new("Sighting DB")
-        .version("0.0.1")
-        .about("(C) 2019 Devo Inc.")
-        .author("Written by Sebastien Tricaud")
-        .get_matches();
+    // App::new("Sighting DB")
+    //     .version("0.0.1")
+    //     .about("(C) 2019 Devo Inc.")
+    //     .author("Written by Sebastien Tricaud")
+    //     .get_matches();
 
     println!("Sigthing DB - count attributes at scale\n(c) Devo Inc 2019 - Written by Sebastien Tricaud");
 
@@ -77,3 +77,30 @@ fn main() {
     }
     rl.save_history(&histfile).unwrap();
 }
+// extern crate ansi_term;
+// extern crate base64;
+
+// use ansi_term::Colour::Red;
+// use std::string::ToString;
+// use base64::{encode,decode};
+
+
+// fn main() {
+//     let red_string = Red.paint("SightingDB Daemon").to_string();
+//     println!("{}", encode(&red_string));
+
+// }
+
+
+
+// extern crate reqwest;
+
+// use std::collections::HashMap;
+
+// fn main() -> Result<(), Box<std::error::Error>> {
+//     let resp: HashMap<String, String> = reqwest::get("https://httpbin.org/ip")?
+//         .json()?;
+//     println!("{:#?}", resp);
+//     Ok(())
+// }
+
