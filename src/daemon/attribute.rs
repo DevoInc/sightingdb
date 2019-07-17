@@ -1,11 +1,15 @@
+use chrono::{DateTime, Utc};
 use std::fmt;
 use serde::Serialize;
+use chrono::serde::ts_seconds;
 
 #[derive(Serialize)]
 pub struct Attribute {
     pub value: String,
-    pub first_seen: u32,
-    pub last_seen: u32,
+    #[serde(with = "ts_seconds")]
+    pub first_seen: DateTime<Utc>,
+    #[serde(with = "ts_seconds")]
+    pub last_seen: DateTime<Utc>,
     pub count: u128,
 }
 
@@ -13,8 +17,8 @@ impl Attribute {
     pub fn new(value: &str) -> Attribute {
         Attribute {
             value: String::from(value), // FIXME: change to Vec<u8>
-            first_seen: 0,
-            last_seen: 0,            
+            first_seen: Utc::now(),
+            last_seen: Utc::now(),
             count: 0,
         }
     }
@@ -22,12 +26,13 @@ impl Attribute {
         return self.count;
     }
     pub fn incr(&mut self) {
+        self.last_seen = Utc::now();
         self.count += 1;
     }
 }
 
 impl fmt::Debug for Attribute {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Attribute {{ value: {}, first_seen: {}, last_seen: {}, count: {}}}", self.value, self.first_seen, self.last_seen, self.count)
+        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}}}", self.value, self.first_seen, self.last_seen, self.count)
     }
 }

@@ -33,6 +33,10 @@ openssl = "0.10.23"
 base64 = "0.10.1"
 #memory-balloon = "0.1.0"
 
+[dependencies.chrono]
+version = "0.4.7"
+features = ["serde"]
+
 [dependencies.actix-web]
 version = "1.0.0"
 features = ["ssl"]
