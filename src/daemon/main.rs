@@ -55,7 +55,7 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
     if _req.query_string().starts_with("val=") {
         let (_, val) = _req.query_string().split_at(4);
         let ans = sighting_reader::read(&mut sharedstate.db, path, val);
-        return HttpResponse::Ok().json(Message{message: ans});
+        return HttpResponse::Ok().body(ans);
     }
 
     return HttpResponse::Ok().json(Message{message: String::from("error")})
