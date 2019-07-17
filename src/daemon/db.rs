@@ -5,7 +5,7 @@ use crate::attribute::Attribute;
 
 pub struct Database {
     db_path: String, // Where are DB is stored on disk
-    hashtable: HashMap<String, Attribute>,
+    hashtable: HashMap<String, HashMap<String, Attribute>>,
 }
 
 impl Database {
@@ -18,18 +18,25 @@ impl Database {
     pub fn write(&mut self, path: &str, value: &str) -> bool {
         let mut attr = self.hashtable.get_mut(&path.to_string());
         match attr {
-            Some(attr) => { println!("Increment"); attr.incr(); },
+            Some(attr) => {
+                let mut valuestables = self.hashtable.get_mut(&path.to_string()).unwrap();
+                let mut iattr = valuestables.get_mut(&value.to_string()).unwrap();
+                iattr.incr();
+            },
             None => {
+                let mut valuestable = HashMap::new();
                 let mut iattr = Attribute::new(&value);
                 iattr.incr();
-                self.hashtable.insert(path.to_string(), iattr);
+                valuestable.insert(value.to_string(), iattr);
+                self.hashtable.insert(path.to_string(), valuestable);
             },
         }
         return true;
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
         let count: u128;
-        let mut attr = self.hashtable.get_mut(&path.to_string());
+        let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
+        let mut attr = valuestable.get_mut(&value.to_string());
         match attr {
             Some(attr) => { return attr.count(); },
             None => {
@@ -38,7 +45,8 @@ impl Database {
         };
     }
     pub fn get_attr(&mut self, path: &str, value: &str) -> String {
-        let attr = self.hashtable.get_mut(&path.to_string()).unwrap();
+        let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
+        let attr = valuestable.get_mut(&value.to_string()).unwrap();
         let jattr = serde_json::to_string(&attr);//(Attribute{value: ans.value.to_string(), count: ans.count, first_seen: ans.first_seen, last_seen: ans.last_seen})
 
         // println!("jattr: {:?}", jattr);
