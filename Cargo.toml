@@ -5,6 +5,10 @@ authors = ["Sebastien Tricaud <sebastien.tricaud@devo.com>"]
 edition = "2018"
 
 [[bin]]
+name = "b64"
+path = "src/b64/main.rs"
+
+[[bin]]
 name = "sighting-daemon"
 path = "src/daemon/main.rs"
 
