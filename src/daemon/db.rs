@@ -16,19 +16,29 @@ impl Database {
         }
     }
     pub fn write(&mut self, path: &str, value: &str) -> bool {
-        let mut attr = self.hashtable.get_mut(&path.to_string());
-        match attr {
-            Some(attr) => {
-                let mut valuestables = self.hashtable.get_mut(&path.to_string()).unwrap();
-                let mut iattr = valuestables.get_mut(&value.to_string()).unwrap();
-                iattr.incr();
+        let mut valuestable = self.hashtable.get_mut(&path.to_string());
+        match valuestable {
+            Some(valuestable) => {
+                //let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
+                let mut attr = valuestable.get_mut(&value.to_string());
+                match attr {
+                    Some(attr) => {
+                        let mut iattr = valuestable.get_mut(&value.to_string()).unwrap();
+                        iattr.incr();
+                    },
+                    None => {
+                        let mut iattr = Attribute::new(&value);
+                        iattr.incr();
+                        valuestable.insert(value.to_string(), iattr);
+                    },
+                }
             },
             None => {
-                let mut valuestable = HashMap::new();
+                let mut newvaluestable = HashMap::new();
                 let mut iattr = Attribute::new(&value);
                 iattr.incr();
-                valuestable.insert(value.to_string(), iattr);
-                self.hashtable.insert(path.to_string(), valuestable);
+                newvaluestable.insert(value.to_string(), iattr);
+                self.hashtable.insert(path.to_string(), newvaluestable);
             },
         }
         return true;
