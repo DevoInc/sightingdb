@@ -8,6 +8,13 @@ pub struct Database {
     hashtable: HashMap<String, HashMap<String, Attribute>>,
 }
 
+#[derive(Serialize)]
+pub struct DbError {
+    error: String,
+    path: String,
+    value: String,
+}
+
 impl Database {
     pub fn new() -> Database {
         Database {
@@ -54,13 +61,27 @@ impl Database {
             },            
         };
     }
-    pub fn get_attr(&mut self, path: &str, value: &str) -> String {
-        let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
-        let attr = valuestable.get_mut(&value.to_string()).unwrap();
-        let jattr = serde_json::to_string(&attr);//(Attribute{value: ans.value.to_string(), count: ans.count, first_seen: ans.first_seen, last_seen: ans.last_seen})
-
-        // println!("jattr: {:?}", jattr);
-        
-        return jattr.unwrap();
+    pub fn get_attr(&mut self, path: &str, value: &str) -> String {        
+        let valuestable = self.hashtable.get_mut(&path.to_string());
+        match valuestable {
+            Some(valuestable) => {
+                let attr = valuestable.get_mut(&value.to_string());
+                match attr {
+                    Some(attr) => {
+                        let jattr = serde_json::to_string(&attr);        
+                        return jattr.unwrap();                        
+                    },
+                    None => {
+                        let err = serde_json::to_string(&DbError{error: String::from("Value not found"), path: path.to_string(), value: value.to_string()});
+                        return err.unwrap();
+                    }
+                }
+            },
+            None => {
+                let err = serde_json::to_string(&DbError{error: String::from("Path not found"), path: path.to_string(), value: value.to_string()});
+                return err.unwrap();
+            },
+        }
+        return String::from("");
     }
 }
