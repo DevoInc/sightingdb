@@ -64,6 +64,8 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
 // fn write(db: web::Data<Mutex<db::Database>>, _req: HttpRequest) -> impl Responder {
 fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpResponse {
     let mut sharedstate = &mut *data.lock().unwrap();
+
+    // println!("{:?}", _req.path());
     
     let (_, path) = _req.path().split_at(3);
     if _req.query_string().starts_with("val=") {
