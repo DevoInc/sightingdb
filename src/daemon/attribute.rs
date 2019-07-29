@@ -11,6 +11,7 @@ pub struct Attribute {
     #[serde(with = "ts_seconds")]
     pub last_seen: DateTime<Utc>,
     pub source: String,
+    #[serde(with = "ts_seconds")]
     pub source_timestamp: DateTime<Utc>,
     pub count: u128,
 }
@@ -22,7 +23,7 @@ impl Attribute {
             first_seen: Utc::now(),
             last_seen: Utc::now(),
             source_timestamp: Utc::now(),
-            source: String::from(""),
+            source: String::from("unknown"),
             count: 0,
         }
     }
@@ -41,6 +42,6 @@ impl Attribute {
 
 impl fmt::Debug for Attribute {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, source: {}}}", self.value, self.first_seen, self.last_seen, self.count, self.source)
+        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, source: {}, source_timestamp: {:?}}}", self.value, self.first_seen, self.last_seen, self.count, self.source, self.source_timestamp)
     }
 }
