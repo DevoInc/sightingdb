@@ -70,7 +70,7 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
     let (_, path) = _req.path().split_at(3);
     if _req.query_string().starts_with("val=") {
         let (_, val) = _req.query_string().split_at(4);
-        sighting_writer::write(&mut sharedstate.db, path, val);        
+        sighting_writer::write(&mut sharedstate.db, path, val);
     }
 
     return HttpResponse::Ok().json(Message{message: String::from("ok")});
