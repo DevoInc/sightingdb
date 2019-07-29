@@ -11,6 +11,7 @@ pub struct Attribute {
     #[serde(with = "ts_seconds")]
     pub last_seen: DateTime<Utc>,
     pub source: String,
+    pub source_timestamp: DateTime<Utc>,
     pub count: u128,
 }
 
@@ -20,6 +21,7 @@ impl Attribute {
             value: String::from(value), // FIXME: change to Vec<u8>
             first_seen: Utc::now(),
             last_seen: Utc::now(),
+            source_timestamp: Utc::now(),
             source: String::from(""),
             count: 0,
         }
@@ -33,6 +35,7 @@ impl Attribute {
     }
     pub fn set_source(&mut self, src: String) {
         self.source = src;
+        self.source_timestamp = Utc::now();
     }
 }
 
