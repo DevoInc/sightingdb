@@ -58,22 +58,27 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
         return HttpResponse::Ok().body(ans);
     }
 
-    return HttpResponse::Ok().json(Message{message: String::from("error")})
+    return HttpResponse::Ok().json(Message{message: String::from("Error: val= not found!")})
 }
 
 // fn write(db: web::Data<Mutex<db::Database>>, _req: HttpRequest) -> impl Responder {
 fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpResponse {
     let mut sharedstate = &mut *data.lock().unwrap();
+    let mut could_write = false;
 
     // println!("{:?}", _req.path());
     
     let (_, path) = _req.path().split_at(3);
     if _req.query_string().starts_with("val=") {
         let (_, val) = _req.query_string().split_at(4);
-        sighting_writer::write(&mut sharedstate.db, path, val);
+        could_write = sighting_writer::write(&mut sharedstate.db, path, val);
     }
 
-    return HttpResponse::Ok().json(Message{message: String::from("ok")});
+    if could_write {
+        return HttpResponse::Ok().json(Message{message: String::from("ok")});
+    }
+    return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
+    
 }
 fn configure(_req: HttpRequest) -> impl Responder {
     "configure"
