@@ -1,5 +1,45 @@
 Sighting DB is designed to scale writing and reading a count of attributes, tracking when if was first and last seen.
 
+Building
+========
+
+1) Make sure you have Rust and Cargo installed
+2) Run ''make''
+
+
+Running
+=======
+
+To run from the source directory:
+
+1) ln -s etc/ssl ssl
+2) ln -s etc/sighting-daemon.ini sighting-daemon.ini
+3) ./target/debug/sighting-daemon
+
+Client Demo
+===========
+
+The b64 command is just formating the string as base64 URL with no padding, it is build as part of this program, or you can make your own.
+
+Writing
+-------
+	$ curl -k https://localhost:9999/w/my/namespace/?val=$(b64 127.0.0.1)
+	{"message":"ok"}
+	
+	$ curl -k https://localhost:9999/w/another/namespace/?val=$(b64 127.0.0.1)
+	{"message":"ok"}
+	$ curl -k https://localhost:9999/w/another/namespace/?val=$(b64 127.0.0.1)
+	{"message":"ok"}
+
+Reading
+-------
+	$ curl -k https://localhost:9999/r/my/namespace/?val=$(b64 127.0.0.1)
+	{"value":"127.0.0.1","first_seen":1566624658,"last_seen":1566624658,"source":"unknown","source_timestamp":1566624658,"count":1}
+	
+	$ curl -k https://localhost:9999/w/another/namespace/?val=$(b64 127.0.0.1)
+	{"value":"127.0.0.1","first_seen":1566624686,"last_seen":1566624689,"source":"unknown","source_timestamp":1566624686,"count":2}
+	
+
 Storage
 =======
 
