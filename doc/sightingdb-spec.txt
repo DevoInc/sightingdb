@@ -1,0 +1,43 @@
+Sighting DB Specification
+=========================
+
+The goal of Sighting is to give automated context to a given Attribute.
+
+An Attribute, commonly known as an indicator in the Threat Intelligence Landscape can be anything, but usually falls
+into one of those categories:
+
+ * IP Address
+ * URL
+ * Host
+ * Hash
+ * String in memory
+ * ...
+
+Attribute Storage
+-----------------
+
+An Attribute is stored with the following information, some being mandatory and others being optional.
+
+Mandatory
++++++++++
+
+ * **Path**: A Path is the container which is greatly flexible, to be tailored to the user needs. It is a simple string separated with the slash character '/' such as, for an IPv4 storage "/demo/ipv4". The last part of the path should contain the object type for the sake of clarity.
+
+ * **Value**: The Value must be encoded in Base64 URL with no padding. The tool b64 which encodes such a string is provided so it can be called from the shell, such as $(b64 10.0.0.1) to produce the string "MTAuMC4wLjE".
+
+
+Optional
+++++++++
+
+ * **Source** (string): Provide information about the source.
+ * **Tags** (string): Adding tags, for anything that has not been thought in the first place. If tags start being widely used, they are likely to become a standard
+ * **TTL** (integer): Expiration time in seconds
+
+Optional fields for a given Attribute can be set after the object creation.
+
+Tags
+++++
+
+List of Tags that are useful as of this release: "false_positive=true".
+Tags are separated with the ';' character.
+
