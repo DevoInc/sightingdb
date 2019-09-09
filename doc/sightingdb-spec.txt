@@ -38,6 +38,9 @@ Optional fields for a given Attribute can be set after the object creation.
 Tags
 ++++
 
-List of Tags that are useful as of this release: "false_positive=true".
+Tags follow the MISP Taxonomy, which can be found there: https://github.com/MISP/misp-taxonomies
+
+If there is any improvement that should be made, please use this page to open issues or pull requests. 
+
 Tags are separated with the ';' character.
 
