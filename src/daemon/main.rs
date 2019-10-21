@@ -22,6 +22,8 @@ use crate::attribute::Attribute;
 
 use serde::{Deserialize, Serialize};
 
+use std::env;
+
 pub struct SharedState {
     pub db: db::Database,
 }
@@ -87,7 +89,7 @@ fn configure(_req: HttpRequest) -> impl Responder {
 fn main() {
 
     let mut sharedstate = Arc::new(Mutex::new(SharedState::new()));
-    
+
     let config = Ini::load_from_file("sighting-daemon.ini").unwrap();
 
     let daemon_config = config.section(Some("daemon")).unwrap();

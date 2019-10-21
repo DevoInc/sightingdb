@@ -14,6 +14,8 @@ pub struct Attribute {
     #[serde(with = "ts_seconds")]
     pub source_timestamp: DateTime<Utc>,
     pub count: u128,
+    pub tags: String,
+    pub ttl: u128,
 }
 
 impl Attribute {
@@ -25,6 +27,8 @@ impl Attribute {
             source_timestamp: Utc::now(),
             source: String::from("unknown"),
             count: 0,
+            tags: String::from(""),
+            ttl: 0,
         }
     }
     pub fn count(&mut self) -> u128 {
@@ -42,6 +46,7 @@ impl Attribute {
 
 impl fmt::Debug for Attribute {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, source: {}, source_timestamp: {:?}}}", self.value, self.first_seen, self.last_seen, self.count, self.source, self.source_timestamp)
+        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, source: {}, source_timestamp: {:?}, tags: {:?}, ttl: {:?}}}",
+               self.value, self.first_seen, self.last_seen, self.count, self.source, self.source_timestamp, self.tags, self.ttl)
     }
 }

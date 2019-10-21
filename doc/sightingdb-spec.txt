@@ -44,3 +44,9 @@ If there is any improvement that should be made, please use this page to open is
 
 Tags are separated with the ';' character.
 
+Expiration
+++++++++++
+
+Expiration is done by the TTL, however when an attribute is expired, it is moved to the internal path: /_internal/expirations/<namespace> where values are expanded from first_seen/last_seen and count is added if another one expires after.
+An attribute expiration check is only done ONLY at reading, there is no scheduler that tracks the time, only when being read.
+
