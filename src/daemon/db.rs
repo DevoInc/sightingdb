@@ -68,7 +68,10 @@ impl Database {
                 let attr = valuestable.get_mut(&value.to_string());
                 match attr {
                     Some(attr) => {
-                        let jattr = serde_json::to_string(&attr);        
+                        if (attr.ttl > 0) {
+                            println!("{:?}", attr);
+                        }
+                        let jattr = serde_json::to_string(&attr);
                         return jattr.unwrap();                        
                     },
                     None => {

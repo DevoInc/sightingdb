@@ -13,6 +13,9 @@ pub fn read(db: &mut Database, path: &str, value: &str) -> String {
     match decoded_val {
         Ok(b64_val) => {
             let str_val = std::str::from_utf8(&b64_val).unwrap();
+
+            
+            
             return db.get_attr(path, str_val);
         },
         Err(..) => {

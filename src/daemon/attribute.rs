@@ -10,9 +10,6 @@ pub struct Attribute {
     pub first_seen: DateTime<Utc>,
     #[serde(with = "ts_seconds")]
     pub last_seen: DateTime<Utc>,
-    pub source: String,
-    #[serde(with = "ts_seconds")]
-    pub source_timestamp: DateTime<Utc>,
     pub count: u128,
     pub tags: String,
     pub ttl: u128,
@@ -24,8 +21,6 @@ impl Attribute {
             value: String::from(value), // FIXME: change to Vec<u8>
             first_seen: Utc::now(),
             last_seen: Utc::now(),
-            source_timestamp: Utc::now(),
-            source: String::from("unknown"),
             count: 0,
             tags: String::from(""),
             ttl: 0,
@@ -38,15 +33,11 @@ impl Attribute {
         self.last_seen = Utc::now();
         self.count += 1;
     }
-    pub fn set_source(&mut self, src: String) {
-        self.source = src;
-        self.source_timestamp = Utc::now();
-    }
 }
 
 impl fmt::Debug for Attribute {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, source: {}, source_timestamp: {:?}, tags: {:?}, ttl: {:?}}}",
-               self.value, self.first_seen, self.last_seen, self.count, self.source, self.source_timestamp, self.tags, self.ttl)
+        write!(f, "Attribute {{ value: {}, first_seen: {:?}, last_seen: {:?}, count: {}, tags: {:?}, ttl: {:?}}}",
+               self.value, self.first_seen, self.last_seen, self.count, self.tags, self.ttl)
     }
 }
