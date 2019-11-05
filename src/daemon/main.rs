@@ -41,12 +41,21 @@ pub struct Message {
     message: String
 }
 
+#[derive(Serialize)]
+pub struct InfoData {
+    implementation: String,
+    version: String,
+    vendor: String,
+    author: String
+}
+
 fn help(_req: HttpRequest) -> impl Responder {
     "Sighting Daemon, written by Sebastien Tricaud, (C) Devo Inc. 2019
 REST Endpoints:
 \t/w: write
 \t/r: read
 \t/c: configure
+\t/i: info
 "
 }
 
@@ -128,11 +137,13 @@ fn main() {
         // w -> write
         // r -> read
         // c -> config (push all to disk, alway in memory, both)
+        // i -> info
         // untyped -> things that have an incorrect type match
         HttpServer::new(move || { App::new().data(sharedstate.clone())
                         .route("/r/*", web::get().to(read))
                         .route("/w/*", web::get().to(write))
                         .route("/c/*", web::get().to(configure))
+                        .route("/i", web::get().to(info))
                         .default_service(web::to(help))
         })
             .bind_ssl(server_address, builder)
@@ -141,4 +152,14 @@ fn main() {
             .unwrap();        
     }
     
+}
+
+fn info(_req: HttpRequest) -> impl Responder {
+    let infoData = InfoData {
+        implementation: String::from("SightingDB"),
+        version: String::from("0.0.1"),
+        vendor: String::from("Devo"),
+        author: String::from("Sebastien Tricaud")
+    };
+    return HttpResponse::Ok().json(&infoData);
 }
