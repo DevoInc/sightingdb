@@ -49,6 +49,17 @@ pub struct InfoData {
     author: String
 }
 
+#[derive(Serialize,Deserialize)]
+pub struct PostData {
+    items: Vec<BulkSighting>
+}
+
+#[derive(Serialize,Deserialize)]
+pub struct BulkSighting {
+    namespace: String,
+    value: String,
+}
+
 fn help(_req: HttpRequest) -> impl Responder {
     "Sighting Daemon, written by Sebastien Tricaud, (C) Devo Inc. 2019
 REST Endpoints:
@@ -93,6 +104,21 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
 }
 fn configure(_req: HttpRequest) -> impl Responder {
     "configure"
+}
+
+// fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
+fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
+    let mut sharedstate = &mut *data.lock().unwrap();
+    let mut could_write = false;
+
+    for i in &postdata.items {
+        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str());
+    }
+
+    if could_write {
+        return HttpResponse::Ok().json(Message{message: String::from("ok")});
+    }
+    return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
 }
 
 fn main() {
@@ -142,6 +168,7 @@ fn main() {
         HttpServer::new(move || { App::new().data(sharedstate.clone())
                         .route("/r/*", web::get().to(read))
                         .route("/w/*", web::get().to(write))
+                        .route("/wb", web::post().to(write_bulk))
                         .route("/c/*", web::get().to(configure))
                         .route("/i", web::get().to(info))
                         .default_service(web::to(help))

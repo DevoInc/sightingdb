@@ -8,6 +8,8 @@ pub fn write(db: &mut Database, path: &str, value: &str) -> bool {
     // match decoded_val {
     //     Ok(b64_val) => {
             // let str_val = std::str::from_utf8(&b64_val).unwrap();
+    println!("Writing path:[{}] value:[{}]", path, value);
+
     db.write(path, value);
     return true;
     //     },
