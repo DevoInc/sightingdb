@@ -106,7 +106,27 @@ fn configure(_req: HttpRequest) -> impl Responder {
     "configure"
 }
 
-// fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
+
+fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
+    let mut sharedstate = &mut *data.lock().unwrap();
+
+    let mut json_response = String::from("{\n\t\"items\": [\n");
+
+    for v in &postdata.items {
+        let ans = sighting_reader::read(&mut sharedstate.db, v.namespace.as_str(), v.value.as_str());
+
+        json_response.push_str("\t\t");
+        json_response.push_str(&ans);
+        json_response.push_str(",\n");                
+    }
+    json_response.pop();
+    json_response.pop(); // We don't need the last ,
+    json_response.push_str("\n"); // however we need the line return :)
+    
+    json_response.push_str("\t]\n}\n");
+    return HttpResponse::Ok().body(json_response);        
+}
+
 fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
     let mut sharedstate = &mut *data.lock().unwrap();
     let mut could_write = false;
@@ -167,6 +187,7 @@ fn main() {
         // untyped -> things that have an incorrect type match
         HttpServer::new(move || { App::new().data(sharedstate.clone())
                         .route("/r/*", web::get().to(read))
+                        .route("/rb", web::post().to(read_bulk))
                         .route("/w/*", web::get().to(write))
                         .route("/wb", web::post().to(write_bulk))
                         .route("/c/*", web::get().to(configure))
