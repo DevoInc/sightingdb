@@ -1,3 +1,5 @@
+<p align="center"><img src="doc/sightingdb-logo-64.png"/></p>
+
 Sighting DB is designed to scale writing and reading a count of attributes, tracking when if was first and last seen.
 
 Building
