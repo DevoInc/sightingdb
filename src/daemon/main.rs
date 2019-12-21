@@ -23,6 +23,10 @@ use crate::attribute::Attribute;
 use serde::{Deserialize, Serialize};
 
 use std::env;
+use std::fs;
+use std::fs::File;
+use std::fs::OpenOptions;
+use std::path::Path;
 
 pub struct SharedState {
     pub db: db::Database,
@@ -148,11 +152,6 @@ fn main() {
     let config = Ini::load_from_file("sighting-daemon.ini").unwrap();
 
     let daemon_config = config.section(Some("daemon")).unwrap();
-    match daemon_config.get("daemonize").unwrap().as_ref() {
-        "true" => { Daemonize::new().pid_file("/var/run/sightingdb.pid").start().unwrap(); },
-        "false" => println!("This daemon is not daemonized. To run in background, set 'daemon = true' in sigthing-daemon.ini"),
-        _ => println!("Unknown daemon setting. Starting in foreground."),
-    }
 
     let listen_ip = daemon_config.get("listen_ip").unwrap();
     let listen_port = daemon_config.get("listen_port").unwrap();
@@ -171,6 +170,44 @@ fn main() {
     let ssl_cert = daemon_config.get("ssl_cert").unwrap();
     let ssl_key = daemon_config.get("ssl_key").unwrap();
 
+    let mut pid_file = "./sightingdb.ini";
+    match daemon_config.get("daemonize").unwrap().as_ref() {
+        "true" => {
+            let stdout = File::create("/tmp/daemon.out").unwrap();
+            let stderr = File::create("/tmp/daemon.err").unwrap();
+
+            // Where can we write the pid?
+            let can_create_file = File::create("/var/run/sightingdb.pid");
+            match can_create_file {
+                Ok(_) => {
+                    pid_file = "/var/run/sightingdb.pid";
+                    Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start();
+                },
+                Err(..) => {
+                    let mut sightingdb_home = env::home_dir().unwrap();
+                    sightingdb_home.push(".sightingdb");
+                    let mut sightingdb_home_pid = Path::new(&sightingdb_home).to_path_buf();
+                    sightingdb_home_pid.push("sightingdb.pid");
+                    pid_file = sightingdb_home_pid.to_str().unwrap();
+                    let can_create_home_pid_file = File::create(pid_file);
+                    match can_create_home_pid_file {
+                        Ok(_) => {},
+                        Err(..) => {
+                            println!("Cannot write pid to /var/run not ~/.sightingdb/, using current dir: sightingdb.pid");
+                            pid_file = "./sightingdb.pid";                            
+                        }
+                    }
+                    Daemonize::new().pid_file(pid_file).start();
+//                    println!("We write the pid there: {:?}", pid_file);
+                }
+            }
+
+            
+        },
+        "false" => println!("This daemon is not daemonized. To run in background, set 'daemonize = true' in sigthing-daemon.ini"),
+        _ => println!("Unknown daemon setting. Starting in foreground."),
+    }
+    
     if use_ssl {
         let mut builder =
             SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
