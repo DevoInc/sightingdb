@@ -1,6 +1,6 @@
 extern crate daemonize;
 extern crate ansi_term;
-
+extern crate clap;
 
 mod sighting_writer;
 mod sighting_reader;
@@ -8,6 +8,7 @@ mod sighting_configure;
 mod attribute;
 mod db;
 
+use clap::Arg;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -145,12 +146,43 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
 }
 
-fn main() {
+fn sightingdb_get_config() -> String {
+    return String::from("config path");
+}
 
+fn main() {    
     let mut sharedstate = Arc::new(Mutex::new(SharedState::new()));
 
-    let config = Ini::load_from_file("sighting-daemon.ini").unwrap();
+    let matches = clap::App::new("SightingDB")
+                          .version("0.0.1")
+                          .author("Sebastien Tricaud <sebastien.tricaud@devo.com>")
+                          .about("Counting Database")
+                          .arg(Arg::with_name("config")
+                               .short("c")
+                               .long("config")
+                               .value_name("FILE")
+                               .help("Sets a custom config file")
+                               .takes_value(true))
+                          .arg(Arg::with_name("v")
+                               .short("v")
+                               .multiple(true)
+                               .help("Sets the level of verbosity"))
+                          .get_matches();
 
+    let config = matches.value_of("config").unwrap_or("sighting-daemon.ini");
+    println!("Value for config: {}", config);
+
+    match matches.occurrences_of("v") {
+        0 => println!("No verbose info"),
+        1 => println!("Some verbose info"),
+        2 => println!("Tons of verbose info"),
+        3 | _ => println!("Don't be crazy"),
+    }
+    
+    let config = Ini::load_from_file("sighting-daemon.ini").unwrap();
+    let sightingdb_ini_file = sightingdb_get_config();
+    println!("SightingDB INI file: {}", sightingdb_ini_file);
+    
     let daemon_config = config.section(Some("daemon")).unwrap();
 
     let listen_ip = daemon_config.get("listen_ip").unwrap();
