@@ -23,14 +23,14 @@ impl Database {
         }
     }
     pub fn write(&mut self, path: &str, value: &str) -> bool {
-        let mut valuestable = self.hashtable.get_mut(&path.to_string());
+        let valuestable = self.hashtable.get_mut(&path.to_string());
         match valuestable {
             Some(valuestable) => {
                 //let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
-                let mut attr = valuestable.get_mut(&value.to_string());
+                let attr = valuestable.get(&value.to_string());
                 match attr {
                     Some(attr) => {
-                        let mut iattr = valuestable.get_mut(&value.to_string()).unwrap();
+                        let iattr = valuestable.get_mut(&value.to_string()).unwrap();
                         iattr.incr();
                     },
                     None => {
@@ -52,8 +52,8 @@ impl Database {
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
         let count: u128;
-        let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
-        let mut attr = valuestable.get_mut(&value.to_string());
+        let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
+        let attr = valuestable.get_mut(&value.to_string());
         match attr {
             Some(attr) => { return attr.count(); },
             None => {
@@ -62,10 +62,10 @@ impl Database {
         };
     }
     pub fn get_attr(&mut self, path: &str, value: &str) -> String {        
-        let valuestable = self.hashtable.get_mut(&path.to_string());
+        let valuestable = self.hashtable.get(&path.to_string());
         match valuestable {
             Some(valuestable) => {
-                let attr = valuestable.get_mut(&value.to_string());
+                let attr = valuestable.get(&value.to_string());
                 match attr {
                     Some(attr) => {
                         if (attr.ttl > 0) {
