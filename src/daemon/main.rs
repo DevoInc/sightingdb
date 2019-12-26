@@ -236,14 +236,24 @@ fn main() {
         _ => use_ssl = true, // no mistake, only false can start the unsecure server.
     }
 
+    let mut ssl_cert: PathBuf;
     let ssl_cert_config = daemon_config.get("ssl_cert").unwrap();
-    let mut ssl_cert = PathBuf::from(configpath.parent().unwrap());
-    ssl_cert.push(&ssl_cert_config);
+    if ssl_cert_config.starts_with("/") {
+        ssl_cert = PathBuf::from(ssl_cert_config);
+    } else {
+        ssl_cert = PathBuf::from(configpath.parent().unwrap());
+        ssl_cert.push(&ssl_cert_config);
+    }
 
+    let mut ssl_key: PathBuf;
     let ssl_key_config = daemon_config.get("ssl_key").unwrap();
-    let mut ssl_key = PathBuf::from(configpath.parent().unwrap());
-    ssl_key.push(&ssl_key_config);
-   
+    if ssl_key_config.starts_with("/") {
+        ssl_key = PathBuf::from(ssl_key_config);
+    } else {
+        ssl_key = PathBuf::from(configpath.parent().unwrap());
+        ssl_key.push(&ssl_key_config);
+    }
+    
     let mut pid_file = "./sightingdb.ini";
     match daemon_config.get("daemonize").unwrap().as_ref() {
         "true" => {
