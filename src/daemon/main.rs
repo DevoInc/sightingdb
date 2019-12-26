@@ -1,6 +1,7 @@
 extern crate daemonize;
 extern crate ansi_term;
 extern crate clap;
+extern crate dirs;
 
 mod sighting_writer;
 mod sighting_reader;
@@ -27,7 +28,7 @@ use std::env;
 use std::fs;
 use std::fs::File;
 use std::fs::OpenOptions;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 pub struct SharedState {
     pub db: db::Database,
@@ -146,17 +147,45 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
 }
 
-fn sightingdb_get_config() -> String {
-    return String::from("config path");
+fn create_home_config() {
+    let mut home_config = PathBuf::from(dirs::home_dir().unwrap());
+    home_config.push(".sightingdb");
+    fs::create_dir_all(home_config);
 }
 
-fn main() {    
+fn sightingdb_get_config() -> Result<String, &'static str> {
+    let ini_file = PathBuf::from("/etc/sightingdb/sighting-daemon.ini");
+    let mut home_ini_file = PathBuf::from(dirs::home_dir().unwrap());
+    
+    let can_open = Path::new(&ini_file).exists();
+    if can_open {
+        return Ok(String::from(ini_file.to_str().unwrap()));
+    }
+    
+    home_ini_file.push(".sightingdb");
+    home_ini_file.push("sighting-daemon.ini");
+
+    let can_open = Path::new(&home_ini_file).exists();
+    if can_open {
+        return Ok(String::from(home_ini_file.to_str().unwrap()));
+    }
+    
+    return Err("Cannot locate sighting-daemon.ini in neither from the -c flag, /etc/sightingdb or ~/.sightingdb/");
+}
+
+fn sightingdb_get_pid() -> String {
+    return String::from("yo");    
+}
+
+fn main() {
+    create_home_config();
+    
     let mut sharedstate = Arc::new(Mutex::new(SharedState::new()));
 
     let matches = clap::App::new("SightingDB")
-                          .version("0.0.1")
+                          .version("0.2")
                           .author("Sebastien Tricaud <sebastien.tricaud@devo.com>")
-                          .about("Counting Database")
+                          .about("Sightings Database")
                           .arg(Arg::with_name("config")
                                .short("c")
                                .long("config")
@@ -169,19 +198,27 @@ fn main() {
                                .help("Sets the level of verbosity"))
                           .get_matches();
 
-    let config = matches.value_of("config").unwrap_or("sighting-daemon.ini");
-    println!("Value for config: {}", config);
+    // match matches.occurrences_of("v") {
+    //     0 => println!("No verbose info"),
+    //     1 => println!("Some verbose info"),
+    //     2 => println!("Tons of verbose info"),
+    //     3 | _ => println!("Don't be crazy"),
+    // }
 
-    match matches.occurrences_of("v") {
-        0 => println!("No verbose info"),
-        1 => println!("Some verbose info"),
-        2 => println!("Tons of verbose info"),
-        3 | _ => println!("Don't be crazy"),
+    let configarg = matches.value_of("config");
+    let mut configstr = String::from("");
+    match configarg {
+        Some(_configstr) => { configstr = _configstr.to_string(); },
+        None => {
+            let sightingdb_ini_file = sightingdb_get_config().unwrap();
+            configstr = sightingdb_ini_file;
+        }
     }
-    
-    let config = Ini::load_from_file("sighting-daemon.ini").unwrap();
-    let sightingdb_ini_file = sightingdb_get_config();
-    println!("SightingDB INI file: {}", sightingdb_ini_file);
+
+    println!("Using configuration file: {}", configstr);
+    let configpath = Path::new(&configstr);
+    let config = Ini::load_from_file(&configstr).unwrap();
+    println!("Config path:{}", configpath.parent().unwrap().display());
     
     let daemon_config = config.section(Some("daemon")).unwrap();
 
@@ -198,10 +235,15 @@ fn main() {
         "false" => use_ssl = false,
         _ => use_ssl = true, // no mistake, only false can start the unsecure server.
     }
-    
-    let ssl_cert = daemon_config.get("ssl_cert").unwrap();
-    let ssl_key = daemon_config.get("ssl_key").unwrap();
 
+    let ssl_cert_config = daemon_config.get("ssl_cert").unwrap();
+    let mut ssl_cert = PathBuf::from(configpath.parent().unwrap());
+    ssl_cert.push(&ssl_cert_config);
+
+    let ssl_key_config = daemon_config.get("ssl_key").unwrap();
+    let mut ssl_key = PathBuf::from(configpath.parent().unwrap());
+    ssl_key.push(&ssl_key_config);
+   
     let mut pid_file = "./sightingdb.ini";
     match daemon_config.get("daemonize").unwrap().as_ref() {
         "true" => {
@@ -246,7 +288,7 @@ fn main() {
         builder
             .set_private_key_file(ssl_key, SslFiletype::PEM)
             .unwrap();
-        builder.set_certificate_chain_file(ssl_cert).unwrap();
+        builder.set_certificate_chain_file(ssl_cert.to_str().unwrap()).unwrap();
 
         // routes:
         // w -> write

@@ -17,7 +17,7 @@ name = "sighting"
 path = "src/client/main.rs"
 
 [dependencies]
-dirs = "1.0"
+dirs = "2.0.2"
 rustyline = "5.0.0"
 regex = "1"
 
