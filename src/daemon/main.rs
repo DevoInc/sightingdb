@@ -55,17 +55,6 @@ pub struct InfoData {
     author: String
 }
 
-#[derive(Serialize,Deserialize)]
-pub struct PostData {
-    items: Vec<BulkSighting>
-}
-
-#[derive(Serialize,Deserialize)]
-pub struct BulkSighting {
-    namespace: String,
-    value: String,
-}
-
 fn help(_req: HttpRequest) -> impl Responder {
     "Sighting Daemon, written by Sebastien Tricaud, (C) Devo Inc. 2019
 REST Endpoints:
@@ -108,10 +97,23 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
     return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
     
 }
+
+
 fn configure(_req: HttpRequest) -> impl Responder {
     "configure"
 }
 
+
+#[derive(Serialize,Deserialize)]
+pub struct PostData {
+    items: Vec<BulkSighting>
+}
+
+#[derive(Serialize,Deserialize)]
+pub struct BulkSighting {
+    namespace: String,
+    value: String,
+}
 
 fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
     let mut sharedstate = &mut *data.lock().unwrap();
@@ -147,6 +149,7 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
 }
 
+
 fn create_home_config() {
     let mut home_config = PathBuf::from(dirs::home_dir().unwrap());
     home_config.push(".sightingdb");
@@ -174,7 +177,27 @@ fn sightingdb_get_config() -> Result<String, &'static str> {
 }
 
 fn sightingdb_get_pid() -> String {
-    return String::from("yo");    
+    let can_create_file = File::create("/var/run/sightingdb.pid");
+    match can_create_file {
+        Ok(_) => {
+            return String::from("/var/run/sightingdb.pid");
+        },
+        Err(..) => {
+            let mut home_pid = PathBuf::from(dirs::home_dir().unwrap());
+            home_pid.push(".sightingdb");
+            home_pid.push("sighting-daemon.pid");
+            let mut pid_file = home_pid.to_str().unwrap();
+            let can_create_home_pid_file = File::create(pid_file);
+            match can_create_home_pid_file {
+                Ok(_) => { return String::from(pid_file); },
+                Err(..) => {
+                    println!("Cannot write pid to /var/run not ~/.sightingdb/, using current dir: sightingdb.pid");
+                    return String::from("./sightingdb.pid");
+                }
+            }
+        }
+    }    
+    return String::from("./sightingdb.pid");
 }
 
 fn main() {
@@ -260,33 +283,8 @@ fn main() {
             let stdout = File::create("/tmp/daemon.out").unwrap();
             let stderr = File::create("/tmp/daemon.err").unwrap();
 
-            // Where can we write the pid?
-            let can_create_file = File::create("/var/run/sightingdb.pid");
-            match can_create_file {
-                Ok(_) => {
-                    pid_file = "/var/run/sightingdb.pid";
-                    Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start();
-                },
-                Err(..) => {
-                    let mut sightingdb_home = env::home_dir().unwrap();
-                    sightingdb_home.push(".sightingdb");
-                    let mut sightingdb_home_pid = Path::new(&sightingdb_home).to_path_buf();
-                    sightingdb_home_pid.push("sightingdb.pid");
-                    pid_file = sightingdb_home_pid.to_str().unwrap();
-                    let can_create_home_pid_file = File::create(pid_file);
-                    match can_create_home_pid_file {
-                        Ok(_) => {},
-                        Err(..) => {
-                            println!("Cannot write pid to /var/run not ~/.sightingdb/, using current dir: sightingdb.pid");
-                            pid_file = "./sightingdb.pid";                            
-                        }
-                    }
-                    Daemonize::new().pid_file(pid_file).start();
-//                    println!("We write the pid there: {:?}", pid_file);
-                }
-            }
-
-            
+            let pid_file = sightingdb_get_pid();
+            Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start();
         },
         "false" => println!("This daemon is not daemonized. To run in background, set 'daemonize = true' in sigthing-daemon.ini"),
         _ => println!("Unknown daemon setting. Starting in foreground."),
