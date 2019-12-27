@@ -20,14 +20,10 @@ use ini::Ini;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, Error};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
-use crate::attribute::Attribute;
-
 use serde::{Deserialize, Serialize};
 
-use std::env;
 use std::fs;
 use std::fs::File;
-use std::fs::OpenOptions;
 use std::path::{Path, PathBuf};
 
 pub struct SharedState {
@@ -66,7 +62,7 @@ REST Endpoints:
 }
 
 fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Responder {
-    let mut sharedstate = &mut *data.lock().unwrap();
+    let sharedstate = &mut *data.lock().unwrap();
     
     let (_, path) = _req.path().split_at(3);
     if _req.query_string().starts_with("val=") {
@@ -80,7 +76,7 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
 
 // fn write(db: web::Data<Mutex<db::Database>>, _req: HttpRequest) -> impl Responder {
 fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpResponse {
-    let mut sharedstate = &mut *data.lock().unwrap();
+    let sharedstate = &mut *data.lock().unwrap();
     let mut could_write = false;
 
     // println!("{:?}", _req.path());
@@ -116,7 +112,7 @@ pub struct BulkSighting {
 }
 
 fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
-    let mut sharedstate = &mut *data.lock().unwrap();
+    let sharedstate = &mut *data.lock().unwrap();
 
     let mut json_response = String::from("{\n\t\"items\": [\n");
 
@@ -136,7 +132,7 @@ fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostD
 }
 
 fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
-    let mut sharedstate = &mut *data.lock().unwrap();
+    let sharedstate = &mut *data.lock().unwrap();
     let mut could_write = false;
 
     for i in &postdata.items {
@@ -186,7 +182,7 @@ fn sightingdb_get_pid() -> String {
             let mut home_pid = PathBuf::from(dirs::home_dir().unwrap());
             home_pid.push(".sightingdb");
             home_pid.push("sighting-daemon.pid");
-            let mut pid_file = home_pid.to_str().unwrap();
+            let pid_file = home_pid.to_str().unwrap();
             let can_create_home_pid_file = File::create(pid_file);
             match can_create_home_pid_file {
                 Ok(_) => { return String::from(pid_file); },
@@ -203,7 +199,7 @@ fn sightingdb_get_pid() -> String {
 fn main() {
     create_home_config();
     
-    let mut sharedstate = Arc::new(Mutex::new(SharedState::new()));
+    let sharedstate = Arc::new(Mutex::new(SharedState::new()));
 
     let matches = clap::App::new("SightingDB")
                           .version("0.2")
@@ -277,7 +273,6 @@ fn main() {
         ssl_key.push(&ssl_key_config);
     }
     
-    let mut pid_file = "./sightingdb.ini";
     match daemon_config.get("daemonize").unwrap().as_ref() {
         "true" => {
             let stdout = File::create("/tmp/daemon.out").unwrap();
