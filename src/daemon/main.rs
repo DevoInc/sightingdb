@@ -120,6 +120,7 @@ pub struct PostData {
 pub struct BulkSighting {
     namespace: String,
     value: String,
+    timestamp: Option<i64>,
 }
 
 fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
@@ -147,7 +148,8 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     let mut could_write = false;
 
     for i in &postdata.items {
-        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str(), 0);
+        let timestamp = i.timestamp.unwrap_or(0);
+        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str(), timestamp);
     }
 
     if could_write {
