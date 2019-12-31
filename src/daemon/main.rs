@@ -91,7 +91,7 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
 
     let val = query_string.get("val");
     match val {
-        Some(v) => {
+        Some(v) => {            
             let timestamp = query_string.get("timestamp").unwrap_or("0");
             let timestamp_i = timestamp.parse::<i64>().unwrap_or(0);
             could_write = sighting_writer::write(&mut sharedstate.db, path, v, timestamp_i);
@@ -148,8 +148,10 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     let mut could_write = false;
 
     for i in &postdata.items {
-        let timestamp = i.timestamp.unwrap_or(0);
-        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str(), timestamp);
+        if i.value.len() > 0 { // There is no need to write a value that does not exists
+            let timestamp = i.timestamp.unwrap_or(0);
+            could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str(), timestamp);
+        }
     }
 
     if could_write {
@@ -312,6 +314,9 @@ fn main() {
         // c -> config (push all to disk, alway in memory, both)
         // i -> info
         // untyped -> things that have an incorrect type match
+
+        let post_limit: usize = daemon_config.get("post_limit").unwrap().parse().unwrap_or(2500000000);
+        
         HttpServer::new(move || { App::new().data(sharedstate.clone())
                         .route("/r/*", web::get().to(read))
                         .route("/rb", web::post().to(read_bulk))
@@ -320,6 +325,7 @@ fn main() {
                         .route("/c/*", web::get().to(configure))
                         .route("/i", web::get().to(info))
                         .default_service(web::to(help))
+                        .data(web::JsonConfig::default().limit(post_limit))
         })
             .bind_ssl(server_address, builder)
             .unwrap()
