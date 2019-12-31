@@ -22,7 +22,7 @@ impl Database {
             hashtable: HashMap::new(),
         }
     }
-    pub fn write(&mut self, path: &str, value: &str) -> bool {
+    pub fn write(&mut self, path: &str, value: &str, timestamp: i64) -> bool {
         let valuestable = self.hashtable.get_mut(&path.to_string());
         match valuestable {
             Some(valuestable) => {
@@ -31,11 +31,19 @@ impl Database {
                 match attr {
                     Some(attr) => {
                         let iattr = valuestable.get_mut(&value.to_string()).unwrap();
-                        iattr.incr();
+                        if timestamp > 0 {
+                            iattr.incr_from_timestamp(timestamp);
+                        } else {
+                            iattr.incr();
+                        }
                     },
                     None => {
                         let mut iattr = Attribute::new(&value);
-                        iattr.incr();
+                        if timestamp > 0 {
+                            iattr.incr_from_timestamp(timestamp);
+                        } else {
+                            iattr.incr();
+                        }
                         valuestable.insert(value.to_string(), iattr);
                     },
                 }
@@ -43,7 +51,11 @@ impl Database {
             None => {
                 let mut newvaluestable = HashMap::new();
                 let mut iattr = Attribute::new(&value);
-                iattr.incr();
+                if timestamp > 0 {
+                    iattr.incr_from_timestamp(timestamp);
+                } else {
+                    iattr.incr();
+                }
                 newvaluestable.insert(value.to_string(), iattr);
                 self.hashtable.insert(path.to_string(), newvaluestable);
             },

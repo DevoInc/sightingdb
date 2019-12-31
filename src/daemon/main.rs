@@ -92,7 +92,9 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
     let val = query_string.get("val");
     match val {
         Some(v) => {
-            could_write = sighting_writer::write(&mut sharedstate.db, path, v);
+            let timestamp = query_string.get("timestamp").unwrap_or("0");
+            let timestamp_i = timestamp.parse::<i64>().unwrap_or(0);
+            could_write = sighting_writer::write(&mut sharedstate.db, path, v, timestamp_i);
             if could_write {
                 return HttpResponse::Ok().json(Message{message: String::from("ok")});
             } else {
@@ -145,7 +147,7 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
     let mut could_write = false;
 
     for i in &postdata.items {
-        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str());
+        could_write = sighting_writer::write(&mut sharedstate.db, i.namespace.as_str(), i.value.as_str(), 0);
     }
 
     if could_write {
