@@ -2,6 +2,7 @@ extern crate daemonize;
 extern crate ansi_term;
 extern crate clap;
 extern crate dirs;
+extern crate qstring;
 
 mod sighting_writer;
 mod sighting_reader;
@@ -19,6 +20,8 @@ use ini::Ini;
 
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, Error};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
+
+use qstring::QString;
 
 use serde::{Deserialize, Serialize};
 
@@ -51,6 +54,7 @@ pub struct InfoData {
     author: String
 }
 
+
 fn help(_req: HttpRequest) -> impl Responder {
     "Sighting Daemon, written by Sebastien Tricaud, (C) Devo Inc. 2019
 REST Endpoints:
@@ -65,13 +69,15 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
     let sharedstate = &mut *data.lock().unwrap();
     
     let (_, path) = _req.path().split_at(3);
-    if _req.query_string().starts_with("val=") {
-        let (_, val) = _req.query_string().split_at(4);
-        let ans = sighting_reader::read(&mut sharedstate.db, path, val);
-        return HttpResponse::Ok().body(ans);
-    }
-
-    return HttpResponse::Ok().json(Message{message: String::from("Error: val= not found!")})
+    let query_string = QString::from(_req.query_string());
+    let val = query_string.get("val");
+    match val {
+        Some(v) => {
+            let ans = sighting_reader::read(&mut sharedstate.db, path, v);
+            return HttpResponse::Ok().body(ans);
+        },
+        None => { return HttpResponse::Ok().json(Message{message: String::from("Error: val= not found!")}); }
+    }    
 }
 
 // fn write(db: web::Data<Mutex<db::Database>>, _req: HttpRequest) -> impl Responder {
@@ -80,18 +86,21 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
     let mut could_write = false;
 
     // println!("{:?}", _req.path());
-    
-    let (_, path) = _req.path().split_at(3);
-    if _req.query_string().starts_with("val=") {
-        let (_, val) = _req.query_string().split_at(4);
-        could_write = sighting_writer::write(&mut sharedstate.db, path, val);
-    }
+    let (_, path) = _req.path().split_at(3); // We remove '/w/'
+    let query_string = QString::from(_req.query_string());
 
-    if could_write {
-        return HttpResponse::Ok().json(Message{message: String::from("ok")});
-    }
-    return HttpResponse::Ok().json(Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
-    
+    let val = query_string.get("val");
+    match val {
+        Some(v) => {
+            could_write = sighting_writer::write(&mut sharedstate.db, path, v);
+            if could_write {
+                return HttpResponse::Ok().json(Message{message: String::from("ok")});
+            } else {
+                return HttpResponse::Ok().json(Message{message: String::from("Could not write request!")});                
+            }
+        },
+        None => { return HttpResponse::BadRequest().json(Message{message: String::from("Did not received a val= argument in the query string.")}); }
+    }    
 }
 
 
