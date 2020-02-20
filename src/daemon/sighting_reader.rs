@@ -8,18 +8,33 @@ pub struct Message {
     message: String
 }
 
+#[derive(Deserialize)]
+struct NotFound {
+    error: String,
+    path: String,
+    value: String
+}
+
+//{"error":"Path not found","path":"security_intelligence","value":"MTAuNTIuNjAuNjk"}
+//{"value":"MTAuNTIuNjAuNjk","first_seen":1582161107,"last_seen":1582161107,"count":1,"tags":"","ttl":0}
+
 pub fn read(db: &mut Database, path: &str, value: &str) -> String {
-    // let decoded_val = decode_config(&value, URL_SAFE_NO_PAD);
-    // match decoded_val {
-    //     Ok(b64_val) => {
-    //         let str_val = std::str::from_utf8(&b64_val).unwrap();
-    return db.get_attr(path, value);
-    //     },
-    //     Err(..) => {
-    //         println!("Read Error: Reading base64 input");
-    //         let err = serde_json::to_string(&Message{message: String::from("Invalid base64 encoding (base64 url with non padding) value")});
-    //         return err.unwrap();
-    //     },
-    // }
+    let attr = db.get_attr(path, value);
+
+    let ret_attr = serde_json::from_str::<NotFound>(&attr);
+    match ret_attr {
+        Ok(_) => {
+            // NotFound is found :)
+            let mut shadow_notfound: String = "_shadow/notfound/".to_owned();
+            shadow_notfound.push_str(path);
+            db.write(&shadow_notfound, value, 0);
+        },
+        Err(_) => {
+            let mut shadow_found: String = "_shadow/found/".to_owned();
+            shadow_found.push_str(path);            
+            db.write(&shadow_found, value, 0);
+        },
+    }
     
+    return attr;
 }
