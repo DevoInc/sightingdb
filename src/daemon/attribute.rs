@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc, NaiveDateTime};
 use std::fmt;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
 
-#[derive(Serialize)]
+#[derive(Serialize,Deserialize)]
 pub struct Attribute {
     pub value: String,
     #[serde(with = "ts_seconds")]
