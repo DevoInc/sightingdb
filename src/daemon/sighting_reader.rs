@@ -19,6 +19,12 @@ struct NotFound {
 //{"value":"MTAuNTIuNjAuNjk","first_seen":1582161107,"last_seen":1582161107,"count":1,"tags":"","ttl":0}
 
 pub fn read(db: &mut Database, path: &str, value: &str) -> String {
+
+    if path.starts_with("_config/") {
+        let err = serde_json::to_string(&Message{message: String::from("No access to _config namespace from outside!")}).unwrap();
+        return err;
+    }
+    
     let attr = db.get_attr(path, value);
 
     // Shadow Sightings
@@ -27,4 +33,9 @@ pub fn read(db: &mut Database, path: &str, value: &str) -> String {
     db.write(&shadow_path, value, 0);
     
     return attr;
+}
+
+// Our internal reading does not trigget shadow sightings
+pub fn read_internal(db: &mut Database, path: &str, value: &str) -> String {
+    return db.get_attr(path, value);
 }
