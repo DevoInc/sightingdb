@@ -2,6 +2,7 @@ use chrono::{DateTime, Utc, NaiveDateTime};
 use std::fmt;
 use serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
+use std::collections::BTreeMap;
 
 #[derive(Serialize,Deserialize)]
 pub struct Attribute {
@@ -13,6 +14,8 @@ pub struct Attribute {
     pub count: u128,
     pub tags: String,
     pub ttl: u128,
+    #[serde(skip)]
+    pub stats: BTreeMap<i64, u128>, // i64 because DateTime.timestamp() returns i64 :'(; We track count by time. 
 }
 
 impl Attribute {
@@ -24,6 +27,29 @@ impl Attribute {
             count: 0,
             tags: String::from(""),
             ttl: 0,
+            stats: BTreeMap::new(),
+        }
+    }
+    pub fn make_stats(&mut self, time: DateTime<Utc>) {
+        let mut rounded_time = time.timestamp() - time.timestamp()%3600;
+        if self.stats.contains_key(&rounded_time) {
+            let mut cnt: u128;
+            cnt = *self.stats.get(&rounded_time).unwrap();
+            cnt += 1;
+            self.stats.insert(rounded_time, cnt);
+        } else {
+            self.stats.insert(rounded_time, 1);            
+        }
+    }
+    pub fn make_stats_from_timestamp(&mut self, timestamp: i64) {
+        let mut rounded_time = timestamp - timestamp%3600;
+        if self.stats.contains_key(&rounded_time) {
+            let mut cnt: u128;
+            cnt = *self.stats.get(&rounded_time).unwrap();
+            cnt += 1;
+            self.stats.insert(rounded_time, cnt);
+        } else {
+            self.stats.insert(rounded_time, 1);            
         }
     }
     pub fn count(&mut self) -> u128 {
@@ -34,6 +60,9 @@ impl Attribute {
             self.first_seen = Utc::now();
         }
         self.last_seen = Utc::now();
+
+        self.make_stats(self.last_seen);
+        
         self.count += 1;
     }
     pub fn incr_from_timestamp(&mut self, timestamp: i64) {
@@ -46,6 +75,7 @@ impl Attribute {
         if timestamp > self.last_seen.timestamp() {
             self.last_seen = DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(timestamp, 0), Utc);
         }
+        self.make_stats_from_timestamp(timestamp);
         self.count += 1;
     }    
 }

@@ -35,7 +35,7 @@ pub fn read(db: &mut Database, path: &str, value: &str) -> String {
     return attr;
 }
 
-// Our internal reading does not trigget shadow sightings
+// Our internal reading does not trigger shadow sightings
 pub fn read_internal(db: &mut Database, path: &str, value: &str) -> String {
     return db.get_attr(path, value);
 }
