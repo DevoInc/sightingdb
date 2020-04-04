@@ -14,7 +14,7 @@ pub struct Attribute {
     pub count: u128,
     pub tags: String,
     pub ttl: u128,
-    #[serde(skip)]
+    // #[serde(skip)]
     pub stats: BTreeMap<i64, u128>, // i64 because DateTime.timestamp() returns i64 :'(; We track count by time. 
 }
 
