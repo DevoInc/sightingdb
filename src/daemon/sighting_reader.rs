@@ -18,14 +18,14 @@ struct NotFound {
 //{"error":"Path not found","path":"security_intelligence","value":"MTAuNTIuNjAuNjk"}
 //{"value":"MTAuNTIuNjAuNjk","first_seen":1582161107,"last_seen":1582161107,"count":1,"tags":"","ttl":0}
 
-pub fn read(db: &mut Database, path: &str, value: &str) -> String {
+pub fn read(db: &mut Database, path: &str, value: &str, with_stats: bool) -> String {
 
     if path.starts_with("_config/") {
         let err = serde_json::to_string(&Message{message: String::from("No access to _config namespace from outside!")}).unwrap();
         return err;
     }
     
-    let attr = db.get_attr(path, value);
+    let attr = db.get_attr(path, value, with_stats);
 
     // Shadow Sightings
     let mut shadow_path: String = "_shadow/".to_owned();
@@ -36,6 +36,6 @@ pub fn read(db: &mut Database, path: &str, value: &str) -> String {
 }
 
 // Our internal reading does not trigger shadow sightings
-pub fn read_internal(db: &mut Database, path: &str, value: &str) -> String {
-    return db.get_attr(path, value);
+pub fn read_internal(db: &mut Database, path: &str, value: &str, with_stats: bool) -> String {
+    return db.get_attr(path, value, with_stats);
 }

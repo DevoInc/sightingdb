@@ -1,6 +1,8 @@
 use chrono::{DateTime, Utc, NaiveDateTime};
 use std::fmt;
 use serde::{Deserialize, Serialize};
+use serde::de::Deserializer;
+
 use chrono::serde::ts_seconds;
 use std::collections::BTreeMap;
 
@@ -16,7 +18,10 @@ pub struct Attribute {
     pub ttl: u128,
     // #[serde(skip)]
     pub stats: BTreeMap<i64, u128>, // i64 because DateTime.timestamp() returns i64 :'(; We track count by time. 
+    pub consensus: u32,
 }
+
+//"stats":{"1586548800":1},
 
 impl Attribute {
     pub fn new(value: &str) -> Attribute {
@@ -28,6 +33,7 @@ impl Attribute {
             tags: String::from(""),
             ttl: 0,
             stats: BTreeMap::new(),
+            consensus: 0,
         }
     }
     pub fn make_stats(&mut self, time: DateTime<Utc>) {
@@ -54,6 +60,9 @@ impl Attribute {
     }
     pub fn count(&mut self) -> u128 {
         return self.count;
+    }
+    pub fn incr_consensus(&mut self) {
+        self.consensus += 1;
     }
     pub fn incr(&mut self) {
         if self.first_seen.timestamp() == 0 {

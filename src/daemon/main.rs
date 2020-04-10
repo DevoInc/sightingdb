@@ -65,6 +65,20 @@ REST Endpoints:
 "
 }
 
+fn read_with_stats(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Responder {
+    let sharedstate = &mut *data.lock().unwrap();
+    
+    let (_, path) = _req.path().split_at(4);
+    let query_string = QString::from(_req.query_string());
+    let val = query_string.get("val");
+    match val {
+        Some(v) => {
+            let ans = sighting_reader::read(&mut sharedstate.db, path, v, true);
+            return HttpResponse::Ok().body(ans);
+        },
+        None => { return HttpResponse::Ok().json(Message{message: String::from("Error: val= not found!")}); }
+    }    
+}
 fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Responder {
     let sharedstate = &mut *data.lock().unwrap();
     
@@ -73,7 +87,7 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
     let val = query_string.get("val");
     match val {
         Some(v) => {
-            let ans = sighting_reader::read(&mut sharedstate.db, path, v);
+            let ans = sighting_reader::read(&mut sharedstate.db, path, v, false);
             return HttpResponse::Ok().body(ans);
         },
         None => { return HttpResponse::Ok().json(Message{message: String::from("Error: val= not found!")}); }
@@ -129,7 +143,26 @@ fn read_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostD
     let mut json_response = String::from("{\n\t\"items\": [\n");
 
     for v in &postdata.items {
-        let ans = sighting_reader::read(&mut sharedstate.db, v.namespace.as_str(), v.value.as_str());
+        let ans = sighting_reader::read(&mut sharedstate.db, v.namespace.as_str(), v.value.as_str(), false);
+
+        json_response.push_str("\t\t");
+        json_response.push_str(&ans);
+        json_response.push_str(",\n");                
+    }
+    json_response.pop();
+    json_response.pop(); // We don't need the last ,
+    json_response.push_str("\n"); // however we need the line return :)
+    
+    json_response.push_str("\t]\n}\n");
+    return HttpResponse::Ok().body(json_response);        
+}
+fn read_bulk_with_stats(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
+    let sharedstate = &mut *data.lock().unwrap();
+
+    let mut json_response = String::from("{\n\t\"items\": [\n");
+
+    for v in &postdata.items {
+        let ans = sighting_reader::read(&mut sharedstate.db, v.namespace.as_str(), v.value.as_str(), true);
 
         json_response.push_str("\t\t");
         json_response.push_str(&ans);
@@ -320,6 +353,8 @@ fn main() {
         HttpServer::new(move || { App::new().data(sharedstate.clone())
                         .route("/r/*", web::get().to(read))
                         .route("/rb", web::post().to(read_bulk))
+                        .route("/rs/*", web::get().to(read_with_stats))
+                        .route("/rbs", web::post().to(read_bulk_with_stats))
                         .route("/w/*", web::get().to(write))
                         .route("/wb", web::post().to(write_bulk))
                         .route("/c/*", web::get().to(configure))

@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use regex::Regex;
 
 use crate::attribute::Attribute;
 
 pub struct Database {
     db_path: String, // Where are DB is stored on disk
     hashtable: HashMap<String, HashMap<String, Attribute>>,
+    re_stats: Regex,
 }
 
 #[derive(Serialize)]
@@ -20,6 +22,8 @@ impl Database {
         Database {
             db_path: String::from("/tmp/sdb/"),
             hashtable: HashMap::new(),
+            // "stats":{"1586548800":1},
+            re_stats: Regex::new(r"\x22stats\x22:\{.+\},").unwrap(),
         }
     }
     pub fn write(&mut self, path: &str, value: &str, timestamp: i64) -> bool {
@@ -73,7 +77,7 @@ impl Database {
             },            
         };
     }
-    pub fn get_attr(&mut self, path: &str, value: &str) -> String {        
+    pub fn get_attr(&mut self, path: &str, value: &str, with_stats: bool) -> String {        
         let valuestable = self.hashtable.get(&path.to_string());
         match valuestable {
             Some(valuestable) => {
@@ -83,8 +87,20 @@ impl Database {
                         if (attr.ttl > 0) {
                             println!("{:?}", attr);
                         }
-                        let jattr = serde_json::to_string(&attr);
-                        return jattr.unwrap();                        
+
+                        // FIXME: There MUST be a better way to handle the stats de-serialization
+                        // in short I want to store stats with attributes, but at the same time
+                        // not send them everytime one want to fetch an attribute, only
+                        // when the user requests the statistics. Otherwise it can be rather large.
+                        // I find regex more elegant (and faster) than deserializing to reserialize.
+                        // Maybe I should use deserialize_with, but I could not find a great way to
+                        // use it for what I want. Open to suggestions here :)
+                        let jattr = serde_json::to_string(&attr).unwrap();
+                        if with_stats {
+                            return jattr;
+                        }
+                        let nostats = self.re_stats.replace(&jattr, "");
+                        return nostats.to_string();                        
                     },
                     None => {
                         let err = serde_json::to_string(&DbError{error: String::from("Value not found"), path: path.to_string(), value: value.to_string()});
