@@ -197,7 +197,10 @@ fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<Post
 fn create_home_config() {
     let mut home_config = PathBuf::from(dirs::home_dir().unwrap());
     home_config.push(".sightingdb");
-    fs::create_dir_all(home_config);
+    match fs::create_dir_all(home_config) {
+        Ok(_) => {},
+        Err(e) => { println!("Error creating home configuration: {}", e); },
+    }
 }
 
 fn sightingdb_get_config() -> Result<String, &'static str> {
