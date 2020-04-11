@@ -1,5 +1,4 @@
 use crate::db::Database;
-use crate::attribute::Attribute;
 use base64::{decode_config, URL_SAFE_NO_PAD};
 use serde::{Deserialize, Serialize};
 

@@ -1,7 +1,6 @@
 use chrono::{DateTime, Utc, NaiveDateTime};
 use std::fmt;
 use serde::{Deserialize, Serialize};
-use serde::de::Deserializer;
 
 use chrono::serde::ts_seconds;
 use std::collections::BTreeMap;
