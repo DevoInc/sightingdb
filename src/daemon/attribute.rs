@@ -36,7 +36,7 @@ impl Attribute {
         }
     }
     pub fn make_stats(&mut self, time: DateTime<Utc>) {
-        let mut rounded_time = time.timestamp() - time.timestamp()%3600;
+        let rounded_time = time.timestamp() - time.timestamp()%3600;
         if self.stats.contains_key(&rounded_time) {
             let mut cnt: u128;
             cnt = *self.stats.get(&rounded_time).unwrap();
@@ -47,7 +47,7 @@ impl Attribute {
         }
     }
     pub fn make_stats_from_timestamp(&mut self, timestamp: i64) {
-        let mut rounded_time = timestamp - timestamp%3600;
+        let rounded_time = timestamp - timestamp%3600;
         if self.stats.contains_key(&rounded_time) {
             let mut cnt: u128;
             cnt = *self.stats.get(&rounded_time).unwrap();
