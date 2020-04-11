@@ -327,7 +327,10 @@ fn main() {
             let stderr = File::create(daemon_config.get("log_err").unwrap()).unwrap();
 
             let pid_file = sightingdb_get_pid();
-            Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start();
+            match Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start() {
+                Ok(_) => {},
+                Err(e) => println!("Error starting daemon: {}", e),
+            }
         },
         "false" => println!("This daemon is not daemonized. To run in background, set 'daemonize = true' in sigthing-daemon.ini"),
         _ => println!("Unknown daemon setting. Starting in foreground."),
