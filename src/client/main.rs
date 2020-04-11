@@ -28,21 +28,21 @@ fn main() {
 
     let mut db = db::Database::new();
     
-    let mut histfile = String::from("");
+    // let mut histfile = String::from("");
     match dirs::home_dir() {
         Some(mut dir) => {
             dir = dir.join(".sightingdb_history");
-            histfile = dir.to_string_lossy().to_string();            
+            // histfile = dir.to_string_lossy().to_string();            
         }
         None => {
-            histfile = String::from(".sightingdb_history");
+            // histfile = String::from(".sightingdb_history");
         }
     }
 
     let rw_re = Regex::new(r"^(r|w)\s(\S+)\s(.*)").unwrap();
     
     let mut rl = Editor::<()>::new();
-    rl.load_history(&histfile);
+    // rl.load_history(&histfile);
     loop {
         let readline = rl.readline("[sdb]> ");
         match readline {
@@ -75,7 +75,7 @@ fn main() {
             },
         }
     }
-    rl.save_history(&histfile).unwrap();
+    // rl.save_history(&histfile).unwrap();
 }
 // extern crate ansi_term;
 // extern crate base64;
