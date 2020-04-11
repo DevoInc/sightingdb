@@ -323,8 +323,8 @@ fn main() {
     
     match daemon_config.get("daemonize").unwrap().as_ref() {
         "true" => {
-            let stdout = File::create("/tmp/daemon.out").unwrap();
-            let stderr = File::create("/tmp/daemon.err").unwrap();
+            let stdout = File::create(daemon_config.get("log_out").unwrap()).unwrap();
+            let stderr = File::create(daemon_config.get("log_err").unwrap()).unwrap();
 
             let pid_file = sightingdb_get_pid();
             Daemonize::new().pid_file(pid_file).stdout(stdout).stderr(stderr).start();
@@ -371,11 +371,11 @@ fn main() {
 }
 
 fn info(_req: HttpRequest) -> impl Responder {
-    let infoData = InfoData {
+    let info_data = InfoData {
         implementation: String::from("SightingDB"),
         version: String::from("0.0.1"),
         vendor: String::from("Devo"),
         author: String::from("Sebastien Tricaud")
     };
-    return HttpResponse::Ok().json(&infoData);
+    return HttpResponse::Ok().json(&info_data);
 }
