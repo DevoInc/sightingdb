@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq)]
-enum ConfigStorage {
+pub enum ConfigStorage {
     IN_MEMORY,
     ON_DISK,    
 }
@@ -40,6 +40,6 @@ pub fn set(path: &str, value: &str) {
     println!("Configuring path {}", path);
 }
 
-pub fn get(path: &str, value: &str) {
-    println!("Get configuration");
-}
+// pub fn get(path: &str, value: &str) {
+//     println!("Get configuration");
+// }

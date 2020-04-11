@@ -20,11 +20,14 @@ pub struct DbError {
 impl Database {
     pub fn new() -> Database {
         Database {
-            db_path: String::from("/tmp/sdb/"),
+            db_path: String::from(""),
             hashtable: HashMap::new(),
             // "stats":{"1586548800":1},
             re_stats: Regex::new(r"\x22stats\x22:\{.+\},").unwrap(),
         }
+    }
+    pub fn set_db_path(&mut self, path: String) {
+        self.db_path = path;
     }
     pub fn write(&mut self, path: &str, value: &str, timestamp: i64) -> bool {
         let valuestable = self.hashtable.get_mut(&path.to_string());
@@ -113,6 +116,6 @@ impl Database {
                 return err.unwrap();
             },
         }
-        return String::from("");
+        // return String::from(""); // unreachable statement, however I want to make it clear this is our default
     }
 }

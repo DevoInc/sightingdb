@@ -244,7 +244,7 @@ fn sightingdb_get_pid() -> String {
             }
         }
     }    
-    return String::from("./sightingdb.pid");
+    // return String::from("./sightingdb.pid"); This is the default, but since the compiler gives a warning, I comment this out
 }
 
 fn main() {
