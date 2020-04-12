@@ -29,8 +29,10 @@ impl Database {
     pub fn set_db_path(&mut self, path: String) {
         self.db_path = path;
     }
-    pub fn write(&mut self, path: &str, value: &str, timestamp: i64) -> bool {
+    pub fn write(&mut self, path: &str, value: &str, timestamp: i64, write_consensus: bool) -> bool {
         let valuestable = self.hashtable.get_mut(&path.to_string());
+        let mut new_value_to_path = false;
+        let mut consensus_count = 0;
         match valuestable {
             Some(valuestable) => {
                 //let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
@@ -45,17 +47,22 @@ impl Database {
                         }
                     },
                     None => {
+                        // New Value to existing path
                         let mut iattr = Attribute::new(&value);
                         if timestamp > 0 {
                             iattr.incr_from_timestamp(timestamp);
                         } else {
                             iattr.incr();
                         }
+
+                        consensus_count = iattr.count;
                         valuestable.insert(value.to_string(), iattr);
+                        new_value_to_path = true;
                     },
                 }
             },
             None => {
+                // New Value to a path that does not exist
                 let mut newvaluestable = HashMap::new();
                 let mut iattr = Attribute::new(&value);
                 if timestamp > 0 {
@@ -63,11 +70,38 @@ impl Database {
                 } else {
                     iattr.incr();
                 }
+                consensus_count = iattr.count;
                 newvaluestable.insert(value.to_string(), iattr);
                 self.hashtable.insert(path.to_string(), newvaluestable);
+                new_value_to_path = true;
             },
         }
+
+        if new_value_to_path == true && write_consensus == true {
+            // Check for consensus
+            // Do we have the value in _all? If not then
+            // we add it and consensus is the count of the
+            // value from _all.
+            self.write(&"_all".to_string(), value, 0, false);
+            // self.new_consensus(path, value, consensus_count);
+        }
+        
         return true;
+    }
+    pub fn new_consensus(&mut self, path: &str, value: &str, consensus_count: u128) -> u128 {
+        let count: u32;
+        let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
+        let attr = valuestable.get_mut(&value.to_string());
+        match attr {
+            Some(attr) => {
+                let iattr = valuestable.get_mut(&value.to_string()).unwrap();
+                iattr.set_consensus(consensus_count);
+                return iattr.consensus;
+            },
+            None => {
+                return 0;
+            },            
+        };
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
         let count: u128;

@@ -17,7 +17,7 @@ pub struct Attribute {
     pub ttl: u128,
     // #[serde(skip)]
     pub stats: BTreeMap<i64, u128>, // i64 because DateTime.timestamp() returns i64 :'(; We track count by time. 
-    pub consensus: u32,
+    pub consensus: u128,
 }
 
 //"stats":{"1586548800":1},
@@ -60,9 +60,6 @@ impl Attribute {
     pub fn count(&mut self) -> u128 {
         return self.count;
     }
-    pub fn incr_consensus(&mut self) {
-        self.consensus += 1;
-    }
     pub fn incr(&mut self) {
         if self.first_seen.timestamp() == 0 {
             self.first_seen = Utc::now();
@@ -72,6 +69,9 @@ impl Attribute {
         self.make_stats(self.last_seen);
         
         self.count += 1;
+    }
+    pub fn set_consensus(&mut self, consensus_count: u128) {
+        self.consensus = consensus_count;
     }
     pub fn incr_from_timestamp(&mut self, timestamp: i64) {
         if self.first_seen.timestamp() == 0 {

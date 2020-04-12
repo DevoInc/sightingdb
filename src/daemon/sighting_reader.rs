@@ -29,7 +29,8 @@ pub fn read(db: &mut Database, path: &str, value: &str, with_stats: bool) -> Str
     // Shadow Sightings
     let mut shadow_path: String = "_shadow/".to_owned();
     shadow_path.push_str(path);
-    db.write(&shadow_path, value, 0);
+    // _shadow does not write the consensus
+    db.write(&shadow_path, value, 0, false);
     
     return attr;
 }
