@@ -29,10 +29,13 @@ impl Database {
     pub fn set_db_path(&mut self, path: String) {
         self.db_path = path;
     }
-    pub fn write(&mut self, path: &str, value: &str, timestamp: i64, write_consensus: bool) -> bool {
+    // Return the count of the written value
+    pub fn write(&mut self, path: &str, value: &str, timestamp: i64, write_consensus: bool) -> u128 {
         let valuestable = self.hashtable.get_mut(&path.to_string());
         let mut new_value_to_path = false;
+        let mut retval = 0;
         let mut consensus_count = 0;
+        
         match valuestable {
             Some(valuestable) => {
                 //let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
@@ -45,6 +48,7 @@ impl Database {
                         } else {
                             iattr.incr();
                         }
+                        retval = iattr.count;
                     },
                     None => {
                         // New Value to existing path
@@ -55,7 +59,8 @@ impl Database {
                             iattr.incr();
                         }
 
-                        consensus_count = iattr.count;
+                        retval = iattr.count;
+                        
                         valuestable.insert(value.to_string(), iattr);
                         new_value_to_path = true;
                     },
@@ -70,7 +75,9 @@ impl Database {
                 } else {
                     iattr.incr();
                 }
-                consensus_count = iattr.count;
+                
+                retval = iattr.count;
+                
                 newvaluestable.insert(value.to_string(), iattr);
                 self.hashtable.insert(path.to_string(), newvaluestable);
                 new_value_to_path = true;
@@ -83,10 +90,9 @@ impl Database {
             // we add it and consensus is the count of the
             // value from _all.
             self.write(&"_all".to_string(), value, 0, false);
-            // self.new_consensus(path, value, consensus_count);
         }
         
-        return true;
+        return retval;
     }
     pub fn new_consensus(&mut self, path: &str, value: &str, consensus_count: u128) -> u128 {
         let count: u32;
@@ -114,17 +120,19 @@ impl Database {
             },            
         };
     }
-    pub fn get_attr(&mut self, path: &str, value: &str, with_stats: bool) -> String {        
-        let valuestable = self.hashtable.get(&path.to_string());
+    pub fn get_attr(&mut self, path: &str, value: &str, with_stats: bool, consensus_count: u128) -> String {        
+        let valuestable = self.hashtable.get_mut(&path.to_string());
+
         match valuestable {
             Some(valuestable) => {
-                let attr = valuestable.get(&value.to_string());
+                let attr = valuestable.get_mut(&value.to_string());
                 match attr {
                     Some(attr) => {
                         if (attr.ttl > 0) {
                             println!("{:?}", attr);
                         }
-
+                        attr.consensus = consensus_count;
+                        
                         // FIXME: There MUST be a better way to handle the stats de-serialization
                         // in short I want to store stats with attributes, but at the same time
                         // not send them everytime one want to fetch an attribute, only
