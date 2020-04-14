@@ -1,4 +1,4 @@
-<p align="center"><img src="doc/sightingdb-logo2_128.png"/></p>
+<p align="center"><img src="doc/sightingdb-logo3_128.png"/></p>
 
 SightingDB is a database designed for Sightings, a technique to count items. This is helpful for Threat Intelligence as Sightings allow
 to enrich indicators or attributes with Observations, rather than Reputation.
