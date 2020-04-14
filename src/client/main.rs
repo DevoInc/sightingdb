@@ -1,21 +1,12 @@
 extern crate rustyline;
-extern crate dirs;
+// extern crate dirs;
 extern crate regex;
 //extern crate clap;
-
-mod db_write;
-mod db_read;
-mod attribute;
-mod db;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use regex::Regex;
 //use clap::App;
-
-//use attribute::Attribute;
-
-
 
 fn main() {
     // App::new("Sighting DB")
@@ -26,18 +17,16 @@ fn main() {
 
     println!("Sigthing DB - count attributes at scale\n(c) Devo Inc 2019 - Written by Sebastien Tricaud");
 
-    let mut db = db::Database::new();
-    
     // let mut histfile = String::from("");
-    match dirs::home_dir() {
-        Some(mut dir) => {
-            dir = dir.join(".sightingdb_history");
-            // histfile = dir.to_string_lossy().to_string();            
-        }
-        None => {
-            // histfile = String::from(".sightingdb_history");
-        }
-    }
+    // match dirs::home_dir() {
+    //     Some(mut dir) => {
+    //         dir = dir.join(".sightingdb_history");
+    //         // histfile = dir.to_string_lossy().to_string();            
+    //     }
+    //     None => {
+    //         // histfile = String::from(".sightingdb_history");
+    //     }
+    // }
 
     let rw_re = Regex::new(r"^(r|w)\s(\S+)\s(.*)").unwrap();
     
@@ -55,10 +44,10 @@ fn main() {
                 let value = caps.get(3).map_or("", |m| m.as_str());
 
                 if db_action == "r" {
-                    db_read::read(&mut db, path, value);
+                    println!("read namespace={}; value={}", path, value);
                 }
                 if db_action == "w" {
-                    db_write::write(&mut db, path, value);
+                    println!("write namespace={}; value={}", path, value);
                 }
             },
             Err(ReadlineError::Interrupted) => {

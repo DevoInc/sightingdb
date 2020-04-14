@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use regex::Regex;
 
 use crate::attribute::Attribute;
@@ -33,15 +33,14 @@ impl Database {
     pub fn write(&mut self, path: &str, value: &str, timestamp: i64, write_consensus: bool) -> u128 {
         let valuestable = self.hashtable.get_mut(&path.to_string());
         let mut new_value_to_path = false;
-        let mut retval = 0;
-        let mut consensus_count = 0;
+        let retval;
         
         match valuestable {
             Some(valuestable) => {
                 //let mut valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
                 let attr = valuestable.get(&value.to_string());
                 match attr {
-                    Some(attr) => {
+                    Some(_attr) => {
                         let iattr = valuestable.get_mut(&value.to_string()).unwrap();
                         if timestamp > 0 {
                             iattr.incr_from_timestamp(timestamp);
@@ -95,11 +94,10 @@ impl Database {
         return retval;
     }
     pub fn new_consensus(&mut self, path: &str, value: &str, consensus_count: u128) -> u128 {
-        let count: u32;
         let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
         let attr = valuestable.get_mut(&value.to_string());
         match attr {
-            Some(attr) => {
+            Some(_attr) => {
                 let iattr = valuestable.get_mut(&value.to_string()).unwrap();
                 iattr.set_consensus(consensus_count);
                 return iattr.consensus;
@@ -110,7 +108,6 @@ impl Database {
         };
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
-        let count: u128;
         let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
         let attr = valuestable.get_mut(&value.to_string());
         match attr {
@@ -128,8 +125,8 @@ impl Database {
                 let attr = valuestable.get_mut(&value.to_string());
                 match attr {
                     Some(attr) => {
-                        if (attr.ttl > 0) {
-                            println!("{:?}", attr);
+                        if attr.ttl > 0 {
+                            println!("FIXME, IMPLEMENT TTL. {:?}", attr);
                         }
                         attr.consensus = consensus_count;
                         

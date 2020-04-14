@@ -18,7 +18,7 @@ use daemonize::Daemonize;
 use ansi_term::Color::Red;
 use ini::Ini;
 
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, Error};
+use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 use qstring::QString;
@@ -97,7 +97,6 @@ fn read(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> impl Res
 // fn write(db: web::Data<Mutex<db::Database>>, _req: HttpRequest) -> impl Responder {
 fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpResponse {
     let sharedstate = &mut *data.lock().unwrap();
-    let mut could_write = false;
 
     // println!("{:?}", _req.path());
     let (_, path) = _req.path().split_at(3); // We remove '/w/'
@@ -108,7 +107,7 @@ fn write(data: web::Data<Arc<Mutex<SharedState>>>, _req: HttpRequest) -> HttpRes
         Some(v) => {            
             let timestamp = query_string.get("timestamp").unwrap_or("0");
             let timestamp_i = timestamp.parse::<i64>().unwrap_or(0);
-            could_write = sighting_writer::write(&mut sharedstate.db, path, v, timestamp_i);
+            let could_write = sighting_writer::write(&mut sharedstate.db, path, v, timestamp_i);
             if could_write {
                 return HttpResponse::Ok().json(Message{message: String::from("ok")});
             } else {
@@ -179,7 +178,7 @@ fn read_bulk_with_stats(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web:
 fn write_bulk(data: web::Data<Arc<Mutex<SharedState>>>, postdata: web::Json<PostData>, _req: HttpRequest) -> impl Responder {
     let sharedstate = &mut *data.lock().unwrap();
     let mut could_write = false;
-
+    
     for i in &postdata.items {
         if i.value.len() > 0 { // There is no need to write a value that does not exists
             let timestamp = i.timestamp.unwrap_or(0);
@@ -276,7 +275,7 @@ fn main() {
     // }
 
     let configarg = matches.value_of("config");
-    let mut configstr = String::from("");
+    let configstr;
     match configarg {
         Some(_configstr) => { configstr = _configstr.to_string(); },
         None => {
