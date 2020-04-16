@@ -108,13 +108,20 @@ impl Database {
         };
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
-        let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
-        let attr = valuestable.get_mut(&value.to_string());
-        match attr {
-            Some(attr) => { return attr.count(); },
+        let valuestable = self.hashtable.get_mut(&path.to_string());
+        match valuestable {
+            Some(valuestable) => {
+                let attr = valuestable.get_mut(&value.to_string());
+                match attr {
+                    Some(attr) => { return attr.count(); },
+                    None => {
+                        return 0;
+                    },            
+                };
+            },
             None => {
                 return 0;
-            },            
+            },
         };
     }
     pub fn get_attr(&mut self, path: &str, value: &str, with_stats: bool, consensus_count: u128) -> String {        
