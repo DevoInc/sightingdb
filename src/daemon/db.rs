@@ -17,6 +17,8 @@ pub struct DbError {
     value: String,
 }
 
+
+
 impl Database {
     pub fn new() -> Database {
         Database {
@@ -26,6 +28,7 @@ impl Database {
             re_stats: Regex::new(r"\x22stats\x22:\{.+\},").unwrap(),
         }
     }
+
     pub fn set_db_path(&mut self, path: String) {
         self.db_path = path;
     }
@@ -89,7 +92,7 @@ impl Database {
             }
         }
 
-        if new_value_to_path == true && write_consensus == true {
+        if new_value_to_path && write_consensus {
             // Check for consensus
             // Do we have the value in _all? If not then
             // we add it and consensus is the count of the
@@ -97,7 +100,7 @@ impl Database {
             self.write(&"_all".to_string(), value, 0, false);
         }
 
-        return retval;
+        retval
     }
     pub fn new_consensus(&mut self, path: &str, value: &str, consensus_count: u128) -> u128 {
         let valuestable = self.hashtable.get_mut(&path.to_string()).unwrap();
@@ -106,12 +109,12 @@ impl Database {
             Some(_attr) => {
                 let iattr = valuestable.get_mut(&value.to_string()).unwrap();
                 iattr.set_consensus(consensus_count);
-                return iattr.consensus;
+                iattr.consensus
             }
             None => {
-                return 0;
+               0
             }
-        };
+        }
     }
     pub fn get_count(&mut self, path: &str, value: &str) -> u128 {
         let valuestable = self.hashtable.get_mut(&path.to_string());
@@ -120,17 +123,17 @@ impl Database {
                 let attr = valuestable.get_mut(&value.to_string());
                 match attr {
                     Some(attr) => {
-                        return attr.count();
+                        attr.count()
                     }
                     None => {
-                        return 0;
+                        0
                     }
-                };
+                }
             }
             None => {
-                return 0;
+                0
             }
-        };
+        }
     }
     pub fn get_attr(
         &mut self,
@@ -163,7 +166,7 @@ impl Database {
                             return jattr;
                         }
                         let nostats = self.re_stats.replace(&jattr, "");
-                        return nostats.to_string();
+                        nostats.to_string()
                     }
                     None => {
                         let err = serde_json::to_string(&DbError {
@@ -171,7 +174,7 @@ impl Database {
                             path: path.to_string(),
                             value: value.to_string(),
                         });
-                        return err.unwrap();
+                        err.unwrap()
                     }
                 }
             }
@@ -181,9 +184,16 @@ impl Database {
                     path: path.to_string(),
                     value: value.to_string(),
                 });
-                return err.unwrap();
+                err.unwrap()
             }
         }
         // return String::from(""); // unreachable statement, however I want to make it clear this is our default
     }
 }
+
+impl Default for Database {
+     fn default() -> Self {
+         Self::new()
+     }
+}
+
