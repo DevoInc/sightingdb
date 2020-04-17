@@ -11,7 +11,7 @@ fn main() {
         println!("Syntax: {} string", &args[0]);
         process::exit(1);
     }
-    
+
     let strenc = &args[1];
     let encoded_val = encode_config(&strenc, URL_SAFE_NO_PAD);
 
